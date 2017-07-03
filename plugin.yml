@@ -1,0 +1,18 @@
+name: TownyFly
+description: Allow players to fly within their own towns.
+version: 1
+author: DrDoof
+main: net.josef.townyfly.TownyFly
+depend: [Towny]
+
+permissions:
+  townyfly.toggle.self:
+    description: Permission to use the /tfly command.
+
+commands:
+  townyfly:
+    description: Toggle flying in towns.
+    aliases: [tfly]
+    usage: /townyfly
+    permission: townyfly.toggle.self
+    permission-message: You do not have permission to use this command.
