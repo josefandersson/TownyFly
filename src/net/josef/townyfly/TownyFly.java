@@ -9,6 +9,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import com.palmergames.bukkit.towny.Towny;
@@ -86,41 +87,58 @@ public class TownyFly extends JavaPlugin implements Listener {
 		}
 	}
 	
+	public void disableTFlyFor(Player player) {
+		playersWithTFly.remove(player.getName());
+
+		player.sendMessage(ChatColor.AQUA + "Disabled townyfly for player " + ChatColor.BLUE + player.getName() + ChatColor.AQUA + ".");
+		
+		player.setFallDistance(0f);
+		player.setAllowFlight(false);
+		player.setFlying(false);
+	}
+	
+	public void enableTFlyFor(Player player) {
+		playersWithTFly.add(player.getName());
+		
+		player.sendMessage(ChatColor.AQUA + "Enabled townyfly for player " + ChatColor.BLUE + player.getName() + ChatColor.AQUA + ".");
+		
+		Resident resident = null;
+		TownBlock townBlock = null;
+		
+		try {
+			resident = TownyUniverse.getDataSource().getResident(player.getName());
+			townBlock = TownyUniverse.getTownBlock(player.getLocation());
+			
+			if (townBlock.getTown() == resident.getTown()) {
+				
+				player.setFallDistance(0f);
+				player.setAllowFlight(true);
+				
+			}
+		} catch (NotRegisteredException|NullPointerException e) {
+		}
+	}
+	
 	public void toggleTFlyFor(Player player) {
 		if (playersWithTFly.contains(player.getName())) {
-			playersWithTFly.remove(player.getName());
-
-			player.sendMessage(ChatColor.AQUA + "Disabled townyfly for player " + ChatColor.BLUE + player.getName() + ChatColor.AQUA + ".");
-			
-			player.setFallDistance(0f);
-			player.setAllowFlight(false);
-			player.setFlying(false);
+			disableTFlyFor(player);
 		} else {
-			playersWithTFly.add(player.getName());
-			
-			player.sendMessage(ChatColor.AQUA + "Enabled townyfly for player " + ChatColor.BLUE + player.getName() + ChatColor.AQUA + ".");
-			
-			Resident resident = null;
-			TownBlock townBlock = null;
-			
-			try {
-				resident = TownyUniverse.getDataSource().getResident(player.getName());
-				townBlock = TownyUniverse.getTownBlock(player.getLocation());
-				
-				if (townBlock.getTown() == resident.getTown()) {
-					
-					player.setFallDistance(0f);
-					player.setAllowFlight(true);
-					
-				}
-			} catch (NotRegisteredException|NullPointerException e) {
-			}
+			enableTFlyFor(player);
+		}
+	}
+	
+	@EventHandler
+	public void onLogout(PlayerQuitEvent e) {
+		Player player = e.getPlayer();
+		
+		if (playersWithTFly.contains(player.getName())) {
+			disableTFlyFor(player);
+			teleportToGround(player);
 		}
 	}
 	
 	@EventHandler
 	public void onChangePlot(PlayerChangePlotEvent e) {
-		
 		Player player = e.getPlayer();
 		Resident resident = null;
 		
@@ -128,13 +146,17 @@ public class TownyFly extends JavaPlugin implements Listener {
 			try {
 				resident = TownyUniverse.getDataSource().getResident(player.getName());
 				
-				if (resident != null) {
-					if (resident.getTown() == e.getTo().getTownBlock().getTown()) {
-						
-						player.setFallDistance(0f);
-						player.setAllowFlight(true);
-						
-					}
+				if (resident.getTown() == e.getTo().getTownBlock().getTown()) {
+					
+					player.setFallDistance(0f);
+					player.setAllowFlight(true);
+					
+				} else {
+					
+					player.setFallDistance(0f);
+					player.setAllowFlight(false);
+					player.setFlying(false);
+					
 				}
 			} catch (NotRegisteredException e1) {
 				player.setFallDistance(0f);

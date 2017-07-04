@@ -1,6 +1,6 @@
 name: TownyFly
 description: Allow players to fly within their own towns.
-version: 1
+version: 2
 author: DrDoof
 main: net.josef.townyfly.TownyFly
 depend: [Towny]
