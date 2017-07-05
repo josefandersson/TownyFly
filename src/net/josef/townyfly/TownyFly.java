@@ -9,6 +9,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerChangedWorldEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -87,20 +88,22 @@ public class TownyFly extends JavaPlugin implements Listener {
 		}
 	}
 	
-	public void disableTFlyFor(Player player) {
+	public void disableTFlyFor(Player player, boolean silent) {
 		playersWithTFly.remove(player.getName());
 
-		player.sendMessage(ChatColor.AQUA + "Disabled townyfly for player " + ChatColor.BLUE + player.getName() + ChatColor.AQUA + ".");
+		if (!silent)
+			player.sendMessage(ChatColor.AQUA + "Disabled townyfly for player " + ChatColor.BLUE + player.getName() + ChatColor.AQUA + ".");
 		
 		player.setFallDistance(0f);
 		player.setAllowFlight(false);
 		player.setFlying(false);
 	}
 	
-	public void enableTFlyFor(Player player) {
+	public void enableTFlyFor(Player player, boolean silent) {
 		playersWithTFly.add(player.getName());
 		
-		player.sendMessage(ChatColor.AQUA + "Enabled townyfly for player " + ChatColor.BLUE + player.getName() + ChatColor.AQUA + ".");
+		if (!silent)
+			player.sendMessage(ChatColor.AQUA + "Enabled townyfly for player " + ChatColor.BLUE + player.getName() + ChatColor.AQUA + ".");
 		
 		Resident resident = null;
 		TownBlock townBlock = null;
@@ -121,9 +124,9 @@ public class TownyFly extends JavaPlugin implements Listener {
 	
 	public void toggleTFlyFor(Player player) {
 		if (playersWithTFly.contains(player.getName())) {
-			disableTFlyFor(player);
+			disableTFlyFor(player, false);
 		} else {
-			enableTFlyFor(player);
+			enableTFlyFor(player, false);
 		}
 	}
 	
@@ -132,8 +135,17 @@ public class TownyFly extends JavaPlugin implements Listener {
 		Player player = e.getPlayer();
 		
 		if (playersWithTFly.contains(player.getName())) {
-			disableTFlyFor(player);
+			disableTFlyFor(player, true);
 			teleportToGround(player);
+		}
+	}
+	
+	@EventHandler
+	public void onWorldChange(PlayerChangedWorldEvent e) {
+		Player player = e.getPlayer();
+		
+		if (playersWithTFly.contains(player.getName())) {
+			disableTFlyFor(player, true);
 		}
 	}
 	
