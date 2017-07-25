@@ -2,6 +2,7 @@ package net.josef.townyfly;
 
 import java.util.ArrayList;
 
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.command.Command;
@@ -23,16 +24,15 @@ import com.palmergames.bukkit.towny.object.TownyUniverse;
 import net.md_5.bungee.api.ChatColor;
 
 public class TownyFly extends JavaPlugin implements Listener {
-
-	private Towny towny = null;
 	
 	private ArrayList<String> playersWithTFly;
+	
 	
 	@Override
 	public void onEnable() {
 		playersWithTFly = new ArrayList<String>();
 		
-		towny = (Towny) getServer().getPluginManager().getPlugin("Towny");
+		Towny towny = (Towny) getServer().getPluginManager().getPlugin("Towny");
 		
 		if (towny == null) {
 			getPluginLoader().disablePlugin(this);
@@ -42,8 +42,8 @@ public class TownyFly extends JavaPlugin implements Listener {
 		}
 		
 		getServer().getPluginManager().registerEvents(this, this);
-		
 	}
+	
 	
 	@Override
 	public void onDisable() {
@@ -57,6 +57,7 @@ public class TownyFly extends JavaPlugin implements Listener {
 		}
 	}
 	
+	
 	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {		
 		Player p = null;
 		if (sender instanceof Player) {
@@ -64,12 +65,15 @@ public class TownyFly extends JavaPlugin implements Listener {
 		}
 		
 		if (args.length > 0) {
-			if (p == null || p.hasPermission("townyfly.toggle.others")) {
-				// TODO: Toggle tfly for somebody else.
+			if (p == null || p.hasPermission(PermissionNodes.TOGGLE_OTHERS)) {
+				Player target = Bukkit.getPlayer(args[0]);
+				if (target != null) {
+					toggleTFlyFor(target);
+				}
 				return true;
 			}
 		} else {
-			if (p.hasPermission("townyfly.toggle.self")) {
+			if (p.hasPermission(PermissionNodes.TOGGLE_SELF)) {
 				toggleTFlyFor(p);
 				return true;
 			}
@@ -77,7 +81,8 @@ public class TownyFly extends JavaPlugin implements Listener {
 		return false;
 	}
 	
-	public void teleportToGround(Player player) {
+	
+	public static void teleportToGround(Player player) {
 		Location loc = player.getLocation();
 		for (int y = loc.getBlockY(); 0 < y; y--) {
 			loc.setY(y);
@@ -87,6 +92,8 @@ public class TownyFly extends JavaPlugin implements Listener {
 			}
 		}
 	}
+
+	
 	
 	public void disableTFlyFor(Player player, boolean silent) {
 		playersWithTFly.remove(player.getName());
@@ -98,6 +105,7 @@ public class TownyFly extends JavaPlugin implements Listener {
 		player.setAllowFlight(false);
 		player.setFlying(false);
 	}
+	
 	
 	public void enableTFlyFor(Player player, boolean silent) {
 		playersWithTFly.add(player.getName());
@@ -122,6 +130,7 @@ public class TownyFly extends JavaPlugin implements Listener {
 		}
 	}
 	
+	
 	public void toggleTFlyFor(Player player) {
 		if (playersWithTFly.contains(player.getName())) {
 			disableTFlyFor(player, false);
@@ -130,57 +139,11 @@ public class TownyFly extends JavaPlugin implements Listener {
 		}
 	}
 	
-	@EventHandler
-	public void onLogout(PlayerQuitEvent e) {
-		Player player = e.getPlayer();
+	
+	public void enableIfAllowed(Player player) {
 		
-		if (playersWithTFly.contains(player.getName())) {
-			disableTFlyFor(player, true);
-			teleportToGround(player);
-		}
 	}
 	
-	@EventHandler
-	public void onWorldChange(PlayerChangedWorldEvent e) {
-		Player player = e.getPlayer();
-		
-		if (playersWithTFly.contains(player.getName())) {
-			disableTFlyFor(player, true);
-		}
-	}
-	
-	@EventHandler
-	public void onChangePlot(PlayerChangePlotEvent e) {
-		Player player = e.getPlayer();
-		Resident resident = null;
-		
-		if (playersWithTFly.contains(player.getName())) {
-			try {
-				resident = TownyUniverse.getDataSource().getResident(player.getName());
-				
-				if (resident.getTown() == e.getTo().getTownBlock().getTown()) {
-					
-					player.setFallDistance(0f);
-					player.setAllowFlight(true);
-					
-				} else {
-					
-					player.setFallDistance(0f);
-					player.setAllowFlight(false);
-					player.setFlying(false);
-					
-				}
-			} catch (NotRegisteredException e1) {
-				player.setFallDistance(0f);
-				
-				if (player.isFlying()) {
-					teleportToGround(player);
-				}
-				
-				player.setAllowFlight(false);
-				player.setFlying(false);
-			}
-		}
-	}
+
 	
 }
